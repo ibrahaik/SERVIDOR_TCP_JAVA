@@ -1,46 +1,56 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
-
-import static java.lang.System.in;
-
+import java.io.*;
+import java.net.*;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ServidorTCP {
     public static void main(String[] args) {
-        try {
-            ServerSocket serverSocket = new ServerSocket(1234);
-            System.out.println("Servidor TCP iniciado");
+        try (ServerSocket serverSocket = new ServerSocket(5555)) {
+            System.out.println("Servidor TCP iniciat, esperant connexions...");
 
+            // El servidor escolta i atén múltiples clients alhora
             while (true) {
-                Socket clienteSocket = serverSocket.accept();
-                System.out.println("Cliente conectado");
+                // Aceptar una nova connexió
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("Client connectat: " + clientSocket.getInetAddress());
 
-                new Thread(() -> manejarCliente(clienteSocket)).start();
+                // Crear un fil per gestionar la connexió amb el client
+                new Thread(() -> gestionarClient(clientSocket)).start();
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void manejarCliente(Socket clienteSocket) {
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(clienteSocket.getInputStream()));
-             PrintWriter out = new PrintWriter(clienteSocket.getOutputStream(), true)) {
+    private static void gestionarClient(Socket clientSocket) {
+        try (
+                ObjectInputStream objectIn = new ObjectInputStream(clientSocket.getInputStream());
+                ObjectOutputStream objectOut = new ObjectOutputStream(clientSocket.getOutputStream())
+        ) {
+            // Rebre l'objecte Llista del client
+            Llista llistaRebuda = (Llista) objectIn.readObject();
+            System.out.println("Rebut: " + llistaRebuda.getNom());
 
-            String mensajeCliente;
-            // Bucle para recibir y responder al cliente
-            while ((mensajeCliente = in.readLine()) != null) {
-                System.out.println("Mensaje recibido: " + mensajeCliente);
-                out.println("Echo: " + mensajeCliente);  // Responde con el mensaje recibido
-            }
+            // Ordenar la llista i eliminar els duplicats
+            List<Integer> llistaOrdenada = llistaRebuda.getNumberList().stream()
+                    .distinct()  // Eliminar duplicats
+                    .sorted()    // Ordenar
+                    .collect(Collectors.toList());
 
-            // Cerramos la conexión con el cliente
-            clienteSocket.close();
-        } catch (IOException e) {
+            // Establir la llista ordenada
+            llistaRebuda.setNumberList(llistaOrdenada);
+
+            // Enviar l'objecte modificat al client
+            objectOut.writeObject(llistaRebuda);
+            System.out.println("Resposta enviada al client.");
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                clientSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
