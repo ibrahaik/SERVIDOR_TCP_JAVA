@@ -1,0 +1,18 @@
+
+ServidorTCP es un programa Java que implementa un servidor TCP multicliente. Permite recibir objetos serializados de tipo Llista desde clientes, procesarlos (ordenar y eliminar duplicados de una lista de números enteros) y devolver el resultado al cliente. El sistema está diseñado para trabajar de forma concurrente, aceptando múltiples conexiones mediante hilos.
+
+🛠️ Tecnologías utilizadas
+Lenguaje: Java
+
+Comunicación: TCP con ServerSocket y Socket
+
+Multicliente: Hilos (Threads) para manejar múltiples conexiones
+
+Serialización de objetos: ObjectInputStream y ObjectOutputStream
+
+Estructura de datos: Listas de enteros (List<Integer>)
+
+Procesamiento funcional: Streams API (distinct, sorted, collect)
+
+IDE compatible: IntelliJ IDEA (archivo .iml presente)
+
